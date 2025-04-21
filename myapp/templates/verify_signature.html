@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signature Verification</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #f0f0f0;
+        }
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .screen {
+            width: 100%;
+            max-width: 900px;
+            padding: 30px 40px;
+            box-sizing: border-box;
+            background: rgba(30, 30, 60, 0.85);
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+        .screen__content {
+            width: 100%;
+        }
+        form {
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        input[type="file"] {
+            flex-grow: 1;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            background-color: rgba(72, 128, 112, 0.3);
+            color: #d0e8d0;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        input[type="file"]::file-selector-button {
+            background-color: #4caf50;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #388e3c;
+        }
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #81c784;
+            background-color: rgba(72, 128, 112, 0.5);
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.6);
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #388e3c;
+        }
+        .images-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+        }
+        .image-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+            background: #263238;
+            padding: 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            max-height: 260px;
+            border-radius: 20px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        canvas {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            pointer-events: none;
+            border-radius: 20px;
+        }
+        .label-text {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #81c784;
+            text-shadow: 0 0 8px #81c784;
+        }
+        .matched-user {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+            color: #a5d6a7;
+            text-align: center;
+        }
+        .result-text {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 30px;
+            text-align: center;
+            color: #c8e6c9;
+            background: #2e7d32;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.7);
+        }
+        .real {
+            color: #81c784;
+            text-shadow: 0 0 10px #81c784;
+        }
+        .fake {
+            color: #e57373;
+            text-shadow: 0 0 10px #e57373;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="screen">
+        <div class="screen__content">
+            <form method="post" enctype="multipart/form-data" action="{% url 'verify_signature' %}">
+                {% csrf_token %}
+                <!-- Removed upload input for original signature as requested -->
+                <input type="file" name="uploaded_signature" required />
+                <button type="submit">Verify Signature</button>
+            </form>
+            {% if result %}
+            <div class="images-container">
+                <div class="image-wrapper">
+                    <div class="label-text" id="uploadedLabel"></div>
+                    <img id="uploadedImage" src="{{ uploaded_signature_url }}" alt="Uploaded Signature" />
+                    <canvas id="uploadedCanvas" width="290" height="290"></canvas>
+                    
+                </div>
+                <div class="image-wrapper">
+                    <div class="label-text">Original Signature</div>
+                    <img id="originalImage" src="{{ original_signature_url }}" alt="Original Signature" />
+                    <canvas id="originalCanvas" width="290" height="290"></canvas>
+                </div>
+            </div>
+            <div class="result-text {% if result == 'Real' %}real{% else %}fake{% endif %}">
+                Result: {{ result }} (Confidence: {{ confidence|floatformat:2 }}%)
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+    function drawCanvas(canvasId, color, labelId) {
+        const canvas = document.getElementById(canvasId);
+        const label = document.getElementById(labelId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = color;
+        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        if(label) {
+            label.textContent = color === '#81c784' ? 'Real' : 'Fake';
+            label.style.color = color;
+            label.style.textShadow = `0 0 10px ${color}`;
+        }
+    }
+
+    window.onload = function() {
+        {% if result %}
+            const color = "{{ result }}" === "Real" ? "#81c784" : "#e57373";
+            drawCanvas('uploadedCanvas', color, 'uploadedLabel');
+            drawCanvas('originalCanvas', '#64b5f6', null);
+        {% endif %}
+    };
+</script>
+</body>
+</html>
